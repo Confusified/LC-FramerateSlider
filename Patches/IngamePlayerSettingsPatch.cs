@@ -70,7 +70,7 @@ namespace FramerateSlider.Patches
             {
                 QualitySettings.vSyncCount = 1;
                 Application.targetFrameRate = -1;
-                value = 0;
+                value = 0; //Set vanilla setting to VSync
             }
             else
             {
@@ -156,7 +156,7 @@ namespace FramerateSlider.Patches
         [HarmonyPostfix]
         private static void UpdateOnSave(IngamePlayerSettings __instance)
         {
-            ES3.Save("FPSCap",ModSettings.LastLoggedIndex.Value,"LCGeneralSaveData");
+            ES3.Save("FPSCap", ModSettings.LastLoggedIndex.Value, "LCGeneralSaveData");
         }
 
         [HarmonyPatch("ResetSettingsToDefault")]
@@ -164,9 +164,18 @@ namespace FramerateSlider.Patches
         private static void ResetValues()
         {
             ModSettings.FramerateLimit.Value = (int)ModSettings.FramerateLimit.DefaultValue;
-            ModSettings.LastLoggedIndex.Value = 4;
-            SliderHandler.sceneSlider.transform.Find("Text (1)").gameObject.GetComponent<TMP_Text>().text = $"Frame rate cap: {ModSettings.FramerateLimit.Value}";
+            ModSettings.LastLoggedIndex.Value = (int)ModSettings.LastLoggedIndex.DefaultValue;
+            UnsavedLimit = ModSettings.FramerateLimit.Value;
+
+            Application.targetFrameRate = ModSettings.FramerateLimit.Value;
+            QualitySettings.vSyncCount = 0;
+
+            SliderHandler.ignoreSliderAudio = true;
+            SliderHandler.sceneSlider.transform.Find("Text (1)").gameObject.GetComponent<TMP_Text>().text = SliderHandler.setCorrectText(SliderHandler.sceneSlider);
             SliderHandler.sceneSlider.transform.Find("Slider").GetComponent<Slider>().value = ModSettings.FramerateLimit.Value;
+            SliderHandler.ignoreSliderAudio = false;
+
+            IngamePlayerSettings.Instance.DiscardChangedSettings(); //To hide the changed settings text when using the thang and the slider isn't already on default
         }
     }
 }
